@@ -34,7 +34,12 @@ const deleteNote=async()=>{
   })
 }
 let handleSubmit=()=>{
+  if(id!== 'new' && !note.body){
+    deleteNote();
+  }
+  else{
   updateNote()
+  }
 }
  
 const getNote= async ()=>{
