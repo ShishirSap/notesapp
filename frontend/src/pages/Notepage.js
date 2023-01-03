@@ -24,6 +24,17 @@ const updateNote=async()=>{
   })
 }
 
+const createNote=async()=>{
+  fetch(`/api/notes/create/`,{
+    method:"POST",
+    headers:{
+      'Content-Type':'application/json'
+    },
+    body:JSON.stringify(note)
+  })
+}
+
+
 const deleteNote=async()=>{
   fetch(`/api/notes/${id}/delete/`,{
     method:'DELETE',
@@ -37,8 +48,11 @@ let handleSubmit=()=>{
   if(id!== 'new' && !note.body){
     deleteNote();
   }
-  else{
+  else if(id!=='new' && note.body!==null){
   updateNote()
+  }
+  else if(id==='new' && note.body!==null){
+    createNote();
   }
 }
  
@@ -73,7 +87,7 @@ useEffect(()=>{
         else{
           return(
             <Link to ='/'>
-            <button>Done</button>
+            <button onClick={handleSubmit}>Done</button>
             </Link>
           )
        
@@ -86,7 +100,7 @@ useEffect(()=>{
 
 
       </div>
-     <textarea onChange={(e)=>setNote({...note,'body':e.target.value})} defaultValue= {note?.body}></textarea>
+     <textarea onChange={(e)=>setNote({...note,'body':e.target.value})} value= {note?.body}></textarea>
     </div>
 
   )
