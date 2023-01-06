@@ -8,9 +8,7 @@ from .serializers import NoteSerializer
 
 
 
-
 # Create your views here.
-
 @api_view(['GET'])
 def getRoutes(request):
     routes = [
