@@ -1,7 +1,8 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from .models import Note
+from rest_framework.decorators import api_view,permission_classes
+from rest_framework.permissions import IsAuthenticated
+from .models import *
 from .serializers import NoteSerializer
 
 
@@ -46,8 +47,10 @@ def getRoutes(request):
     return Response(routes)
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def getNotes(request):
-    notes=Note.objects.all().order_by('-updated')
+    user=request.user
+    notes=user.note_set.all().order_by('-updated')
     serializer=NoteSerializer(notes,many=True)
     print(serializer)
     print(serializer.data)
@@ -73,9 +76,13 @@ def updateNote(request,pk):
     return Response(serializer.data)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def createNote(request):
     data=request.data
-    note=Note.objects.create(body=data['body'])
+    userobject=User.objects.get(id=data['user']['user_id'])
+   
+    note=Note.objects.create(body=data['note'],user=userobject)
+    
     serializer=NoteSerializer(note,many=False)
 
     return Response(serializer.data)
@@ -85,3 +92,23 @@ def deleteNote(request,pk):
     note =Note.objects.get(id=pk)
     note.delete()
     return Response("Note was deleted")
+
+
+
+
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        token['username'] = user.username
+
+        return token
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer

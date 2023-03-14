@@ -6,21 +6,28 @@ import {
 
 
 import './App.css';
+import { AuthProvider } from "./context/AuthContext";
 
-import Header from './components/Header';
+
 import Notepage from "./pages/Notepage";
 import NotesListPages from './pages/NotesListPages';
+import Signuppage from "./pages/Signuppage";
+import PrivateRoute from "./utils/PrivateRoute";
 
 function App() {
   return (
     <Router>
     <div className="container dark">
       <div className='app'>
-      <Header/>
+      <AuthProvider>
       <Routes>
-      <Route path='/' exact element={<NotesListPages/>} />
-      <Route path='/note/:id' element={<Notepage/>} />
+        
+      <Route path='/' exact element={<PrivateRoute><NotesListPages/></PrivateRoute>} />
+      <Route path='/note/:id' element={<PrivateRoute><Notepage/></PrivateRoute>} />
+      <Route path='/signup' element={<Signuppage/> } />
+      
       </Routes>
+      </AuthProvider>
       </div>
       </div>
     </Router>
