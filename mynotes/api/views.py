@@ -4,12 +4,13 @@ from rest_framework.decorators import api_view,permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .models import *
 from .serializers import NoteSerializer
+from django.db import connection
+from .helpers import dictfetchall
 
 
 
 
 
-# Create your views here.
 @api_view(['GET'])
 def getRoutes(request):
     routes = [
@@ -50,28 +51,38 @@ def getRoutes(request):
 @permission_classes([IsAuthenticated])
 def getNotes(request):
     user=request.user
-    notes=user.note_set.all().order_by('-updated')
-    serializer=NoteSerializer(notes,many=True)
-    print(serializer)
-    print(serializer.data)
-
-    return Response(serializer.data)
+    # notes=user.note_set.all().order_by('-updated')
+    # serializer=NoteSerializer(notes,many=True)
+    # print(serializer)
+    # print(serializer.data)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM api_note WHERE user=%s",(str(user.id)))
+        data=dictfetchall(cursor)
+    return Response(data)
 
 
 @api_view(['GET'])
 def getNote(request,pk):
-    notes=Note.objects.get(id=pk)
-    serializer=NoteSerializer(notes,many=False)
-
-    return Response(serializer.data)
+    # notes=Note.objects.get(id=pk)
+    # serializer=NoteSerializer(notes,many=False)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM api_note WHERE id=%s ORDER BY updated ASC",(str(pk)))
+        data=dictfetchall(cursor)
+    return Response(data)
 @api_view(['PUT'])
 def updateNote(request,pk):
     data=request.data
     note=Note.objects.get(id=pk)
-    serializer=NoteSerializer(instance=note,data=data)
+    # serializer=NoteSerializer(instance=note,data=data)
 
-    if serializer.is_valid():
-        serializer.save()
+    # if serializer.is_valid():
+    #     serializer.save()
+    with connection.cursor() as cursor:
+            cursor.execute("UPDATE api_note SET data=%s WHERE id=%s",[data,pk])
+            cursor.execute("SELECT * FROM api_note WHERE id=%s ORDER By updated DESC",(str(pk)))
+
+            response=dictfetchall(cursor)
+            print(response)
 
     return Response(serializer.data)
 
@@ -81,16 +92,22 @@ def createNote(request):
     data=request.data
     userobject=User.objects.get(id=data['user']['user_id'])
    
-    note=Note.objects.create(body=data['note'],user=userobject)
+    # note=Note.objects.create(body=data['note'],user=userobject)
     
-    serializer=NoteSerializer(note,many=False)
+    # serializer=NoteSerializer(note,many=False)
+    with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO api_note(user,body) VALUES (%s,%s)",(str(userobject.id),data['note']))
+            cursor.execute("SELECT * FROM api_note WHERE user=%s",(str(user.id)))
+            data=dictfetchall(cursor)
 
-    return Response(serializer.data)
+    return Response(data)
 
 @api_view(['DELETE','GET'])
 def deleteNote(request,pk):
-    note =Note.objects.get(id=pk)
-    note.delete()
+    # note =Note.objects.get(id=pk)
+    # note.delete()
+    with connection.cursor() as cursor:
+        cursor.execute("DELETE FROM api_note WHERE id=%s",[pk])
     return Response("Note was deleted")
 
 
